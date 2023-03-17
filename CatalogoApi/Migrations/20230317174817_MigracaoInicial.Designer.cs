@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CatalogoApi.Migrations
 {
     [DbContext(typeof(AppDbContex))]
-    [Migration("20230315180423_MigracaoInicial")]
+    [Migration("20230317174817_MigracaoInicial")]
     partial class MigracaoInicial
     {
         /// <inheritdoc />
