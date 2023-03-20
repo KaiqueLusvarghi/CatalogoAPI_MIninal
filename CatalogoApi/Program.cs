@@ -1,15 +1,48 @@
 using CatalogoApi.Context;
 using CatalogoApi.Models;
+using CatalogoApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>      //configurando o swagger para o JWT
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ApiCatalogo", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = @"JWT Authorization header using the Bearer scheme.
+                    Enter 'Bearer'[space].Example: \'Bearer 12345abcdef\'",
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                          new OpenApiSecurityScheme
+                          {
+                              Reference = new OpenApiReference
+                              {
+                                  Type = ReferenceType.SecurityScheme,
+                                  Id = "Bearer"
+                              }
+                          },
+                         new string[] {}
+                    }
+                });
+});
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -18,8 +51,56 @@ builder.Services.AddDbContext<AppDbContex>(options =>
                     .UseMySql(connectionString,
                     ServerVersion.AutoDetect(connectionString)));
 
+builder.Services.AddSingleton<ITokenService>(new TokenService()); //Registrando o serviço
+
+builder.Services.AddAuthentication //validação do token
+                 (JwtBearerDefaults.AuthenticationScheme)
+                 .AddJwtBearer(options =>
+                 {
+                     options.TokenValidationParameters = new TokenValidationParameters
+                     {
+                         ValidateIssuer = true,
+                         ValidateAudience = true,
+                         ValidateLifetime = true,
+                         ValidateIssuerSigningKey = true,
+
+                         ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                         ValidAudience = builder.Configuration["Jwt:Audience"],
+                         IssuerSigningKey = new SymmetricSecurityKey
+                         (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                     };
+                 });
+
+builder.Services.AddAuthorization(); // serviço de autorização 
+
 
 var app = builder.Build();
+
+//endpoint para o login
+
+app.MapPost("/login", [AllowAnonymous] (UserModel userModel, ITokenService tokenService) =>
+{
+    if (userModel == null)
+    {
+        return Results.BadRequest("Login Inválido");
+    }
+    if (userModel.UserName == "kaique" && userModel.Password == "12345")
+    {
+        var tokenString = tokenService.GerarToken(app.Configuration["Jwt:Key"],
+            app.Configuration["Jwt:Issuer"],
+            app.Configuration["Jwt:Audience"],
+            userModel);
+        return Results.Ok(new { token = tokenString });
+    }
+    else
+    {
+        return Results.BadRequest("Login Inválido");
+    }
+}).Produces(StatusCodes.Status400BadRequest)
+              .Produces(StatusCodes.Status200OK)
+              .WithName("Login")
+              .WithTags("Autenticacao");
+
 
 //definindfo os endpoints 
 
@@ -34,7 +115,7 @@ app.MapPost("/categorias", async (Categoria categoria, AppDbContex db) =>
 });
 
 app.MapGet("/categorias", async(AppDbContex db) => 
-        await db.Categorias.ToListAsync());
+        await db.Categorias.ToListAsync()).WithTags("Categorias").RequireAuthorization(); ;//protegendo endpoint
 
 app.MapGet("/categorias/{id:int}", async (int id, AppDbContex db) =>
 {
@@ -86,7 +167,7 @@ app.MapPost("/produtos", async (Produto produto, AppDbContex db) =>
 
 });
 
-app.MapGet("/produtos", async (AppDbContex db) =>await db.Produtos.ToListAsync());
+app.MapGet("/produtos", async (AppDbContex db) =>await db.Produtos.ToListAsync()).WithTags("Produtos").RequireAuthorization(); //protegendo endpoint
 
 app.MapGet("/produtos/{id:int}", async (int id, AppDbContex db) =>
 {
@@ -135,8 +216,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
-
+//ativando os serviços de autorização e autenticação 
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 

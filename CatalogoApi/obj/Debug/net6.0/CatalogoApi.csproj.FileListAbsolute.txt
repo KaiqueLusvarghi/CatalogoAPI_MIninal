@@ -52,3 +52,10 @@ C:\DevC#\CatalogoApi\CatalogoApi\obj\Debug\net6.0\refint\CatalogoApi.dll
 C:\DevC#\CatalogoApi\CatalogoApi\obj\Debug\net6.0\CatalogoApi.pdb
 C:\DevC#\CatalogoApi\CatalogoApi\obj\Debug\net6.0\CatalogoApi.genruntimeconfig.cache
 C:\DevC#\CatalogoApi\CatalogoApi\obj\Debug\net6.0\ref\CatalogoApi.dll
+C:\DevC#\CatalogoApi\CatalogoApi\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\DevC#\CatalogoApi\CatalogoApi\bin\Debug\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\DevC#\CatalogoApi\CatalogoApi\bin\Debug\net6.0\Microsoft.IdentityModel.Logging.dll
+C:\DevC#\CatalogoApi\CatalogoApi\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.dll
+C:\DevC#\CatalogoApi\CatalogoApi\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\DevC#\CatalogoApi\CatalogoApi\bin\Debug\net6.0\Microsoft.IdentityModel.Tokens.dll
+C:\DevC#\CatalogoApi\CatalogoApi\bin\Debug\net6.0\System.IdentityModel.Tokens.Jwt.dll
